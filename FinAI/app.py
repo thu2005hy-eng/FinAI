@@ -7,6 +7,16 @@ from analysis import calculate_ratios
 from ai_comment import generate_comments, overall_assessment
 from pdf_export import export_pdf
 
+def find_value(data_dict, keywords):
+    for key, value in data_dict.items():
+        key_lower = str(key).lower()
+
+        for word in keywords:
+            if word.lower() in key_lower:
+                return value
+
+    return 0
+
 
 # ==========================
 # Cấu hình giao diện
@@ -114,39 +124,73 @@ if file:
         st.write("Dữ liệu BCĐKT:")
         st.write(balance)
 
+
         data = {
 
-            "doanh_thu":
-                income.get("Doanh thu thuần", 0),
+            "doanh_thu": find_value(
+                income,
+                [
+                    "doanh thu thuần",
+                    "doanh thu bán hàng",
+                    "doanh thu về bán hàng"
+                ]
+            ),
 
-            "loi_nhuan_sau_thue":
-                income.get("Lợi nhuận sau thuế", 0),
+            "loi_nhuan_sau_thue": find_value(
+                income,
+                [
+                    "lợi nhuận sau thuế",
+                    "lợi nhuận sau thuế tndn",
+                    "lnst"
+                ]
+            ),
 
-            "tong_tai_san":
-                balance.get("Tổng tài sản", 0),
+            "tong_tai_san": find_value(
+                balance,
+                ["tổng tài sản"]
+            ),
 
-            "von_chu_so_huu":
-                balance.get("Vốn chủ sở hữu", 0),
+            "von_chu_so_huu": find_value(
+                balance,
+                ["vốn chủ sở hữu"]
+            ),
 
-            "no_phai_tra":
-                balance.get("Nợ phải trả", 0),
+            "no_phai_tra": find_value(
+                balance,
+                ["nợ phải trả"]
+            ),
 
-            "tai_san_ngan_han":
-                balance.get("A. TÀI SẢN NGẮN HẠN", 0),
+            "tai_san_ngan_han": find_value(
+                balance,
+                ["tài sản ngắn hạn"]
+            ),
 
-            "no_ngan_han":
-                balance.get("Nợ ngắn hạn", 0),
+            "no_ngan_han": find_value(
+                balance,
+                ["nợ ngắn hạn"]
+            ),
         }
-        st.write("Dữ liệu đưa vào tính toán:")
+        st.write("Trước xử lý:")
         st.write(data)
 
 
         # Tính chỉ số
         for key in data:
             if isinstance(data[key], str):
-                data[key] = float(
-                    data[key].replace(".", "")
-        )
+
+                value = data[key].strip()
+
+                if "(" in value and ")" in value:
+                    value = "-" + value.replace("(", "").replace(")", "")
+
+                value = value.replace(".", "").replace(",", "")
+
+                data[key] = float(value)
+
+
+        st.write("Sau xử lý:")
+        st.write(data)
+
 
         ratios = calculate_ratios(data)
 
